@@ -1,9 +1,9 @@
 import tkinter as tk
 from tkinter import filedialog
 
-
 class createGUI:
     def __init__(self):
+        self.dont_save_button = None
         self.root = tk.Tk()
         self.root.geometry("800x1000")
         self.root.title("Notepad")
@@ -17,12 +17,16 @@ class createGUI:
         self.text_field_scrollbar = tk.Scrollbar(frame, orient='vertical', command=self.text_field.yview)
         self.text_field_scrollbar.pack(side='right', fill='y')
         self.text_field.config(yscrollcommand=self.text_field_scrollbar.set)
+        print(self.text_field.get("1.0","end-1c"))
 
-        self.root.protocol("WM_DELETE_WINDOW",self.leave_save_question)
+        self.menu = tk.Menu(self.root)
+        self.create_top_menu()
+
+        self.root.protocol("WM_DELETE_WINDOW",lambda: self.leave_save_question("leave_app"))
 
         self.root.mainloop()
 
-    def leave_save_question(self):
+    def leave_save_question(self,dont_save_status):
         self.leave_app_save_question_messagebox = tk.Toplevel()
         self.leave_app_save_question_messagebox.geometry("250x150")
         self.leave_app_save_question_messagebox.title("Unsaved Changes")
@@ -36,11 +40,24 @@ class createGUI:
         save_button = tk.Button(buttons_frame, text="Save",command=self.leave_app_save)
         save_button.pack(side='left', pady=10,padx=10)
 
-        dont_save_button = tk.Button(buttons_frame, text="Don't Save",command=self.leave_app_dont_save)
-        dont_save_button.pack(side='left', pady=10,padx=10)
+        self.dont_save_button = tk.Button(buttons_frame, text="Don't Save")
+        self.dont_save_button.pack(side='left', pady=10, padx=10)
 
-        cancel_button = tk.Button(buttons_frame, text="Cancel",command=self.leave_app_cancel)
-        cancel_button.pack(side='left', pady=10,padx=10)
+        cancel_button = tk.Button(buttons_frame, text="Cancel", command=self.leave_app_cancel)
+        cancel_button.pack(side='left', pady=10, padx=10)
+
+        if self.if_text_written()==True:
+            if dont_save_status == "leave_app":
+                self.dont_save_button.config(command=self.leave_app_dont_save)
+            elif dont_save_status == "file_new":
+                self.dont_save_button.config(command=self.text_field_delete)
+            elif dont_save_status == "file_open":
+                self.dont_save_button.config(command=self.open_file)
+            else:
+                print("Unknown Error")
+        else:
+            self.root.destroy()
+
 
     def leave_app_cancel(self):
         self.leave_app_save_question_messagebox.destroy()
@@ -49,11 +66,63 @@ class createGUI:
         self.root.destroy()
 
     def leave_app_save(self):
-        #only create file, after opening files is implemented change so its detecting to create new file or override old
-        self.filename = filedialog.asksaveasfilename(initialdir="/",title="Save as",initialfile=".txt",defaultextension=".txt",filetypes=(("Text Documents (*.txt)", "*.txt"), ("All Files", "*.*")))
-        open(self.filename,"x")
-        with open(self.filename,"w") as f:
+        self.leave_app_save_question_messagebox.destroy()
+        self.leave_app_save_filename = filedialog.asksaveasfilename(initialdir="/",title="Save as",initialfile=".txt",defaultextension=".txt",filetypes=(("Text Documents (*.txt)", "*.txt"), ("All Files", "*.*")))
+        open(self.leave_app_save_filename,"x")
+        with open(self.leave_app_save_filename,"w") as f:
             f.write(self.text_field.get("1.0","end-1c"))
+
+    def create_top_menu(self):
+        file = tk.Menu(self.menu, tearoff=0)
+        self.menu.add_cascade(label='File', menu=file)
+        file.add_command(label='New', command=self.file_new)
+        file.add_command(label='New Window', command=None)
+        file.add_command(label='Open...', command=self.file_open)
+        file.add_command(label='Save', command=None)
+        file.add_command(label='Save as', command=None)
+        file.add_separator()
+        file.add_command(label='Page setup...', command=None)
+        file.add_command(label='Print...', command=None)
+        file.add_separator()
+        file.add_command(label='Exit', command=self.leave_save_question)
+
+        self.root.config(menu = self.menu)
+
+    def file_new(self):
+        if self.if_text_written()==False:
+            self.text_field_delete()
+        elif self.if_text_written()==True:
+            self.leave_save_question("file_new")
+        else:
+            print("Unknown Error")
+
+    def file_new_windows(self):
+        print("NEW WINDOW")
+
+    def file_open(self):
+        if self.if_text_written()==False:
+            self.open_file()
+        elif self.if_text_written()==True:
+            self.leave_save_question("file_open")
+        else:
+            print("Unknown Error")
+
+    def if_text_written(self):
+        if self.text_field.get("1.0","end-1c")!="":
+            return True
+        else:
+            return False
+
+    def text_field_delete(self):
+        self.text_field.delete("1.0", "end-1c")
+        self.leave_app_save_question_messagebox.destroy()
+
+    def open_file(self):
+        self.open_file_filename = filedialog.askopenfilename(title="Open",initialdir='/',filetypes=(("Text Documents (*.txt)", "*.txt"), ("All Files", "*.*")))
+        self.text_field_delete()
+        with open(self.open_file_filename) as f:
+            self.text_field.insert(tk.END, f.readline())
+            f.close()
 
 
 createGUI()
