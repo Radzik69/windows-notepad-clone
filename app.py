@@ -37,7 +37,7 @@ class createGUI:
         buttons_frame = tk.Frame(self.leave_app_save_question_messagebox)
         buttons_frame.pack(pady=10,padx=10)
 
-        save_button = tk.Button(buttons_frame, text="Save",command=self.leave_app_save)
+        save_button = tk.Button(buttons_frame, text="Save",command=lambda: self.file_save_as(True))
         save_button.pack(side='left', pady=10,padx=10)
 
         self.dont_save_button = tk.Button(buttons_frame, text="Don't Save")
@@ -65,13 +65,6 @@ class createGUI:
     def leave_app_dont_save(self):
         self.root.destroy()
 
-    def leave_app_save(self):
-        self.leave_app_save_question_messagebox.destroy()
-        self.leave_app_save_filename = filedialog.asksaveasfilename(initialdir="/",title="Save as",initialfile=".txt",defaultextension=".txt",filetypes=(("Text Documents (*.txt)", "*.txt"), ("All Files", "*.*")))
-        open(self.leave_app_save_filename,"x")
-        with open(self.leave_app_save_filename,"w") as f:
-            f.write(self.text_field.get("1.0","end-1c"))
-
     def create_top_menu(self):
         file = tk.Menu(self.menu, tearoff=0)
         self.menu.add_cascade(label='File', menu=file)
@@ -79,7 +72,7 @@ class createGUI:
         file.add_command(label='New Window', command=None)
         file.add_command(label='Open...', command=self.file_open)
         file.add_command(label='Save', command=None)
-        file.add_command(label='Save as', command=None)
+        file.add_command(label='Save as', command=lambda: self.file_save_as(False))
         file.add_separator()
         file.add_command(label='Page setup...', command=None)
         file.add_command(label='Print...', command=None)
@@ -106,6 +99,18 @@ class createGUI:
             self.leave_save_question("file_open")
         else:
             print("Unknown Error")
+
+    def file_save_as(self,if_leave_app):
+        try:
+            self.leave_app_save_question_messagebox.destroy()
+        except Exception:
+            print(Exception)
+        self.leave_app_save_filename = filedialog.asksaveasfilename(initialdir="/", title="Save as", initialfile=".txt",defaultextension=".txt",filetypes=(("Text Documents (*.txt)", "*.txt"), ("All Files", "*.*")))
+        open(self.leave_app_save_filename, "x")
+        with open(self.leave_app_save_filename, "w") as f:
+            f.write(self.text_field.get("1.0", "end-1c"))
+        if if_leave_app == True:
+            self.root.destroy()
 
     def if_text_written(self):
         if self.text_field.get("1.0","end-1c")!="":
